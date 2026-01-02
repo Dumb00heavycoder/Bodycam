@@ -1,0 +1,371 @@
+PART 1 — BUILDING A SECURE WEBPAGE (BEGINNER LEVEL)
+1. What the Webpage Actually Is
+
+The webpage is just a user interface.
+
+It:
+
+Shows login screen
+
+Shows dashboard
+
+Sends requests like:
+
+“Get footage for this police ID and date”
+
+Displays results
+
+It does NOT:
+
+Store passwords
+
+Access database directly
+
+Handle security rules
+
+2. Webpage Structure (Simple)
+
+Your webpage has 3 screens:
+
+Screen 1: Login Page
+
+Fields:
+
+Username
+
+Password
+
+Screen 2: Dashboard
+
+Shows:
+
+Total police registered
+
+Total bodycams active
+
+Total footages stored
+
+Recent access logs
+
+Screen 3: Footage Fetch Page
+
+Inputs:
+
+Police ID (UPP-ID)
+
+Date range
+
+Request / approval ID
+
+Button:
+
+“Fetch Footage”
+
+3. How Login Works (Very Important)
+Step-by-step (simple language):
+
+User enters username + password
+
+Webpage sends this to backend:
+
+POST /api/login
+
+
+Backend:
+
+Checks username/password in database
+
+If correct → creates a token
+
+Backend sends token back
+
+Webpage stores token (temporarily)
+
+Every future request includes this token
+
+This token proves:
+
+“This user is authenticated”
+
+4. Technology for Webpage (Beginner Friendly)
+
+Use:
+
+HTML → structure
+
+CSS → design
+
+JavaScript → logic
+
+React.js → makes UI easier (recommended)
+
+Do NOT use:
+
+PHP login systems
+
+Direct database queries
+
+Client-side authentication
+
+PART 2 — BACKEND SERVER (THE MOST IMPORTANT PART)
+
+This is the brain of the system.
+
+1. What Backend Does
+
+The backend:
+
+Handles login
+
+Enforces access rules
+
+Talks to database
+
+Logs every access
+
+Connects bodycams to storage
+
+Backend language:
+
+Java + Spring Boot
+
+2. Backend Components (Conceptual)
+Controller → Service → Database
+               ↓
+           Access Logs
+
+Controller
+
+Receives web requests:
+
+Login
+
+Fetch data
+
+Upload metadata
+
+Service
+
+Business rules:
+
+Is user allowed?
+
+Is approval ID valid?
+
+Should access be logged?
+
+Repository
+
+Talks to database safely
+
+3. Login & Security (Beginner Explanation)
+
+Passwords are:
+
+NEVER stored as plain text
+
+Stored as hashed values
+
+Process:
+
+User enters password
+
+Backend hashes it
+
+Compares with stored hash
+
+If match → login success
+
+Security method:
+
+JWT token (digital pass)
+
+4. Fetching Footage (Step-by-Step)
+
+When admin fetches footage:
+
+Webpage sends:
+
+GET /api/footage
+
+
+With:
+
+UPP-ID
+
+Date
+
+Approval reference
+
+Backend:
+
+Validates token
+
+Checks admin role
+
+Queries database:
+
+Find matching footage
+
+Logs access in access_logs
+
+Returns metadata + secure link
+
+Webpage displays result
+
+Footage is never directly downloaded unless authorized.
+
+PART 3 — DATABASE (WHAT YOU ALREADY DESIGNED)
+
+Your database contains:
+
+Police personnel
+
+Bodycams
+
+Footage metadata
+
+Access logs
+
+ID sequences
+
+Important rule:
+
+Database is accessed only by backend
+
+1. How Backend Connects to Database
+
+Backend uses:
+
+JDBC (Java Database Connector)
+
+Credentials stored securely
+
+Connection flow:
+
+Backend → PostgreSQL → Result → Backend → Webpage
+
+
+No frontend involvement.
+
+2. Example Query Flow
+
+Admin requests footage:
+
+Backend runs:
+
+SELECT * FROM footage_metadata
+WHERE upp_id = 'UPP-2018-LKO-004512'
+AND recording_start::date = '2025-01-01';
+
+
+Then logs:
+
+INSERT INTO access_logs (...)
+
+PART 4 — BODYCAM TO DATABASE CONNECTION (IMPORTANT)
+
+This is where beginners get confused.
+Let’s simplify.
+
+1. Bodycam Does NOT Upload to Database
+
+Bodycam uploads to:
+
+Backend API
+
+NOT to database directly.
+
+2. Bodycam Upload Flow (Very Clear)
+Bodycam
+   ↓ (encrypted upload)
+Backend API
+   ↓
+Cloud Storage (video file)
+   ↓
+Database (metadata only)
+
+3. What Bodycam Sends
+
+Bodycam sends:
+
+Video file (encrypted)
+
+Bodycam ID
+
+Timestamp
+
+GPS
+
+Officer UPP-ID
+
+4. What Backend Does with Bodycam Data
+
+Receives encrypted video
+
+Stores video in cloud storage
+
+Generates hash (SHA-256)
+
+Stores metadata in database:
+
+UPP-ID
+
+Storage path
+
+Hash
+
+Time
+
+Links footage permanently to officer
+
+Bodycam cannot edit or delete anything.
+
+5. How Bodycam Authenticates
+
+Each bodycam has:
+
+Device ID
+
+Secret key (burned into hardware)
+
+Backend checks:
+
+“Is this a valid registered bodycam?”
+
+Only then upload allowed.
+
+PART 5 — AUTOMATIC UPLOAD (NO MANUAL ACTION)
+
+Once recording ends:
+
+Bodycam auto-uploads
+
+No officer intervention
+
+No local deletion option
+
+If network fails:
+
+Bodycam caches encrypted file
+
+Uploads when docked or network returns
+
+PART 6 — LOGGING & AUDIT (CRITICAL)
+
+Every access creates a record:
+
+Who accessed
+Which footage
+Why
+When
+From where
+
+
+This:
+
+Protects officers
+
+Prevents misuse
+
+Satisfies courts
